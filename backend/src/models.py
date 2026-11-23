@@ -110,12 +110,47 @@ class AnalysisJob(Base):
     id = Column(Integer, primary_key=True)
     job_code = Column(String(60), unique=True, nullable=False)
     batch_id = Column(Integer, ForeignKey("survey_batches.id"), nullable=False)
+    job_type = Column(String(20), nullable=False, default="cluster")
     status = Column(String(30), nullable=False, default="queued")
     input_summary = Column(JSON, nullable=False, default=dict)
     result = Column(JSON, nullable=True)
     error = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     finished_at = Column(DateTime(timezone=True), nullable=True)
+
+class ConsensusReview(Base):
+    __tablename__ = "consensus_reviews"
+    id = Column(Integer, primary_key=True)
+    review_code = Column(String(60), unique=True, nullable=False)
+    batch_a_id = Column(Integer, ForeignKey("survey_batches.id"), nullable=False)
+    batch_b_id = Column(Integer, ForeignKey("survey_batches.id"), nullable=False)
+    pair_key = Column(String(80), nullable=False)
+    active_pair_key = Column(String(80), unique=True, nullable=True)
+    status = Column(String(30), nullable=False, default="queued")
+    summary = Column(JSON, nullable=False, default=dict)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    expired_at = Column(DateTime(timezone=True), nullable=True)
+    expire_reason = Column(Text, nullable=True)
+    pieces = relationship("ConsensusPiece", back_populates="review", cascade="all, delete-orphan", order_by="ConsensusPiece.id")
+
+class ConsensusPiece(Base):
+    __tablename__ = "consensus_pieces"
+    id = Column(Integer, primary_key=True)
+    piece_code = Column(String(80), unique=True, nullable=False)
+    review_id = Column(Integer, ForeignKey("consensus_reviews.id"), nullable=False)
+    cluster_labels = Column(JSON, nullable=False, default=dict)
+    manhole_ids = Column(JSON, nullable=False, default=list)
+    asset_codes = Column(JSON, nullable=False, default=list)
+    point_count = Column(Integer, nullable=False)
+    team_a_average_settlement_mm = Column(Float, nullable=False)
+    team_b_average_settlement_mm = Column(Float, nullable=False)
+    team_a_max_settlement_mm = Column(Float, nullable=False)
+    team_b_max_settlement_mm = Column(Float, nullable=False)
+    pass_fail = Column(String(20), nullable=False)
+    fail_reason = Column(Text, nullable=True)
+    review = relationship("ConsensusReview", back_populates="pieces")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

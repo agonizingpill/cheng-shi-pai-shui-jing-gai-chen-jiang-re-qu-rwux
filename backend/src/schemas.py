@@ -34,3 +34,7 @@ class ResurveyIn(BaseModel):
     measured_at: datetime
     settlement_after_mm: float = Field(ge=0, le=200)
     notes: str = ""
+
+class ConsensusReviewIn(BaseModel):
+    batch_a_id: int
+    batch_b_id: int

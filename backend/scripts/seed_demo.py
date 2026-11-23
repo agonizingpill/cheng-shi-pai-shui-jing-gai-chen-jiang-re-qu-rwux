@@ -40,10 +40,26 @@ def seed():
                 settlement = round(9.4 + (i % 4) * 1.7, 2) if i <= 10 else round(13.0 + (i % 5) * 1.9, 2)
                 ref = "CGCS2000" if i == 20 else "WGS84-METER"
                 db.add(SurveyPoint(point_code=f"SP-1121-{i:02d}", batch_id=batch.id, manhole_id=asset.id, x=asset.x, y=asset.y, elevation_mm=round(101230.0 - settlement, 2), settlement_mm=settlement, coordinate_reference=ref, measured_at=dt(21, 7, 30), quality_status="datum_conflict" if i == 20 else "checked"))
+        batch_b, _ = get_or_create(db, SurveyBatch, {"batch_code": "SURV-2026-1121-PM"}, {"measured_at": dt(21, 15, 30), "instrument": "Leica TS16 / RUN-1121-PM", "coordinate_reference": "WGS84-METER", "status": "open", "notes": "乙队同路段下午复测，南河路东段断面偏移、西段沉降读数偏低"})
+        if not db.execute(select(SurveyPoint).where(SurveyPoint.batch_id == batch_b.id)).scalars().first():
+            for i, asset in enumerate(assets, 1):
+                if 6 <= i <= 10:
+                    x, y = asset.x + 40.5, asset.y + 31.5
+                    settlement = round(4.9 + (i % 3) * 0.9, 2)
+                else:
+                    x = asset.x + 1.2 + (i % 3) * 0.8
+                    y = asset.y - 0.9 + (i % 2) * 1.4
+                    settlement = round(9.6 + (i % 4) * 1.6, 2) if i <= 10 else round(12.8 + (i % 5) * 1.8, 2)
+                db.add(SurveyPoint(point_code=f"SP-1121-PM-{i:02d}", batch_id=batch_b.id, manhole_id=asset.id, x=round(x, 2), y=round(y, 2), elevation_mm=round(101230.0 - settlement, 2), settlement_mm=settlement, coordinate_reference="WGS84-METER", measured_at=dt(21, 15, 30), quality_status="checked"))
+        batch_c, _ = get_or_create(db, SurveyBatch, {"batch_code": "SURV-2026-1122-AM"}, {"measured_at": dt(22, 7, 30), "instrument": "Leica TS16 / RUN-1122-AM", "coordinate_reference": "WGS84-METER", "status": "open", "notes": "乙队次日换批复测，用于替代撤回批次"})
+        if not db.execute(select(SurveyPoint).where(SurveyPoint.batch_id == batch_c.id)).scalars().first():
+            for i, asset in enumerate(assets, 1):
+                settlement = round(9.5 + (i % 4) * 1.5, 2) if i <= 10 else round(12.9 + (i % 5) * 1.7, 2)
+                db.add(SurveyPoint(point_code=f"SP-1122-{i:02d}", batch_id=batch_c.id, manhole_id=asset.id, x=round(asset.x + 0.6 + (i % 2) * 0.5, 2), y=round(asset.y - 0.4 + (i % 3) * 0.3, 2), elevation_mm=round(101230.0 - settlement, 2), settlement_mm=settlement, coordinate_reference="WGS84-METER", measured_at=dt(22, 7, 30), quality_status="checked"))
         supervisor = db.execute(select(User).where(User.username == "supervisor")).scalar_one()
         get_or_create(db, WorkNotice, {"notice_code": "WN-XH-20261121"}, {"zone_id": None, "road_name": "西环路雨污分流施工段", "contractor": "城建二公司市政一队", "permit_no": "SG-2026-XH-041", "starts_at": dt(21, 8), "ends_at": dt(25, 18), "boundary": {"min_x": 1098, "max_x": 1155, "min_y": 1968, "max_y": 2020}, "status": "active", "lane_closure_required": True, "conflict_note": "施工围挡占用西环路北侧慢车道", "created_by": supervisor.id})
         db.commit()
-        print("seed_demo: users=3 assets=20 points=20 notices=1")
+        print("seed_demo: users=3 assets=20 batches=3 points=60 notices=1")
     finally:
         db.close()
 

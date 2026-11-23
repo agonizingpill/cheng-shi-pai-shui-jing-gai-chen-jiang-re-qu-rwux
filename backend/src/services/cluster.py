@@ -24,6 +24,11 @@ def cluster_batch(db, job_id):
         return
     batch = db.get(SurveyBatch, job.batch_id)
     try:
+        if batch.status == "withdrawn":
+            job.status = "failed"
+            job.error = "测量批次已撤回，聚类结果不予发布"
+            job.finished_at = datetime.now(timezone.utc)
+            db.commit(); return
         job.status = "running"; db.commit()
         points = job.input_summary["points"]
         refs = validate_datum(batch, points)
